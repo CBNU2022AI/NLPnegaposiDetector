@@ -38,3 +38,11 @@ class Reply:
     @date.setter
     def date(self, date):
         self._date = date
+
+    @property
+    def URL(self):
+        return self._URL
+
+    @URL.setter
+    def URL(self, URL):
+        self._URL = URL
