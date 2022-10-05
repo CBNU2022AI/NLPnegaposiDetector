@@ -9,9 +9,9 @@
 본인 chrome 버전에 맞는 chrome driver 설치됨
 """
 
-
 from selenium import webdriver
-
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
@@ -30,7 +30,7 @@ class Crawler:
 
     # mongo db 연결
     def connectMongo(self):
-        client = MongoClient(host='teamfrankly.kr', port=27021)
+        client = MongoClient(host='192.168.35.72', port=27021)
 
         # db select
         db = client['negaposiSelector']
@@ -45,8 +45,11 @@ class Crawler:
         hrefList = []
         # 드라이버 자동설치
         driver = webdriver.Chrome(service = Service(ChromeDriverManager().install()))
-        # hrefList = self.hrefCrawling(keyword, driver)
-        # self.insertHref(hrefList, db)
+        hrefList = self.hrefCrawling(keyword, driver)
+
+        self.insertHref(hrefList, db)
+        print("href insert end")
+
         collection = db['youtubehref']
         hrefJson = collection.find()
 
@@ -54,14 +57,14 @@ class Crawler:
             if json["isParsed"] == False:
                 href = json["href"]
                 commentList = self.commentCrawling(driver, href)
-                self.insertComment(commentList)
+                self.insertComment(commentList, db)
                 myquery = { "id": json["_id"] }
                 newvalues = { "$set": { "isParsed": True } }
                 collection.update_one(myquery, newvalues)
                 print(json["href"]+"done\n")
 
-
-        print("stub")
+        driver.close()
+        print("keyword crawling 끝.")
 
     def hrefCrawling(self, keyword, driver):
 
@@ -137,6 +140,7 @@ class Crawler:
 
         for a in aTagList:
             newJson = {
+                "keyword" : keyword,
                 "href" : a.attrs["href"],
                 "title" : a.attrs["title"],
                 "isParsed" : False
@@ -149,6 +153,7 @@ class Crawler:
 
         dataList = []
         driver.get("https://www.youtube.com"+href)
+        now = datetime.now()
 
         time.sleep(3)
         #       댓글스크롤 구간
@@ -198,37 +203,48 @@ class Crawler:
         # print ("[PASS] Get all comments of URL")
 
         html0 = driver.page_source
-        driver.close()
         html = BeautifulSoup(html0, 'html.parser')
 
 
 
-        comments_list = html.findAll('div', {'class':'style-scope ytd-item-section-renderer'})
+        comments_list = html.select("#contents > ytd-comment-thread-renderer")
         # print (comments_list)
 
 
         for commentTag in comments_list:
             #contents of comment
-            comment = commentTag.find('div',{'id':'content'})
+            comment = commentTag.find('div',{'id':'content'}).text
             comment = comment.replace('\n', '')
             comment = comment.replace('\t', '')
             #print(comment)
-            youtube_id = commentTag.find('a', {'id': 'author-text'}).span.text
+            youtube_id = commentTag.find('a', {'id': 'author-text'}).text
             youtube_id = youtube_id.replace('\n', '')
             youtube_id = youtube_id.replace('\t', '')
             youtube_id = youtube_id.strip()
 
-            raw_date = comments_list.find('yt-formatted-string', { 'class': 'published-time-text above-comment style-scope ytd-comment-renderer'})
-            date = raw_date.a.text
+            date = commentTag.find('a', { 'class': 'yt-simple-endpoint style-scope yt-formatted-string'}).text
 
-            try:
-                like_num = commentTag.find('span', {'id': 'vote-count-middle', 'class': 'style-scope ytd-comment-action-buttons-renderer', 'aria-label': re.compile('좋아요')}).text
-                like_num = like_num.replace('\n', '')
-                like_num = like_num.replace('\t', '')
-                like_num = like_num.strip()
-            except: like_num = 0
+            dateToken = date.split(" ")
 
-            data = {'youtube_id': youtube_id, 'comment': comment, 'date': date, 'like_num': like_num}
+
+            if(dateToken[1].startwith("hour")):
+                realDate = now - relativedelta(hours=int(dateToken[0]))
+            elif(dateToken[1].startwith("day")):
+                realDate = now - relativedelta(days=int(dateToken[0]))
+            elif(dateToken[1].startwith("month")):
+                realDate = now - relativedelta(months=int(dateToken[0]))
+            elif(dateToken[1].startwith("week")):
+                realDate = now - relativedelta(weeks=int(dateToken[0]))
+            elif(dateToken[1].startwith("year")):
+                realDate = now - relativedelta(years=int(dateToken[0]))
+            elif(dateToken[1].startwith("minute")):
+                realDate = now - relativedelta(minutes=int(dateToken[0]))
+            else:
+                print("time error")
+                print(date)
+                realDate = now
+
+            data = {'youtube_id': youtube_id, 'comment': comment, 'date': realDate}
             dataList.append(data)
         return dataList
 
@@ -238,7 +254,7 @@ class Crawler:
 
         collection.insert_many(hrefList)
 
-    def insertHref(self, commentList, db):
+    def insertComment(self, commentList, db):
 
         collection = db['youtubecomment']
 
