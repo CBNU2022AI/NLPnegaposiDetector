@@ -51,12 +51,14 @@ class Crawler:
         print("href insert end")
 
         collection = db['youtubehref']
-        hrefJson = collection.find()
+        hrefJson = collection.find({"keyword" : keyword})
 
         for json in hrefJson:
             if json["isParsed"] == False:
                 href = json["href"]
                 commentList = self.commentCrawling(driver, href)
+                if commentList == None:
+                    continue
                 self.insertComment(commentList, db)
                 myquery = { "id": json["_id"] }
                 newvalues = { "$set": { "isParsed": True } }
@@ -210,7 +212,8 @@ class Crawler:
         comments_list = html.select("#contents > ytd-comment-thread-renderer")
         # print (comments_list)
 
-
+        if(len(comments_list) == 0):
+            return None
         for commentTag in comments_list:
             #contents of comment
             comment = commentTag.find('div',{'id':'content'}).text
