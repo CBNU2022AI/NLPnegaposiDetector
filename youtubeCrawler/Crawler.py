@@ -15,7 +15,7 @@ from dateutil.relativedelta import relativedelta
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
-from youtubeCrawler.fixedQueue import fixedQueue
+from fixedQueue import fixedQueue
 from pyvirtualdisplay import Display
 
 import time
