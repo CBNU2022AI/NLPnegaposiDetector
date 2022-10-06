@@ -45,11 +45,12 @@ class Crawler:
         hrefList = []
         # 드라이버 자동설치
         options = webdriver.ChromeOptions()
+        options.add_argument('--headless')
         options.add_argument('--no-sandbox')
         options.add_argument('--disable-dev-shm-usage')
         options.add_argument("user-agent=Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko")
 
-        driver = webdriver.Chrome(service = Service(ChromeDriverManager().install()))
+        driver = webdriver.Chrome(service = Service(ChromeDriverManager().install()),chrome_options=options)
         hrefList = self.hrefCrawling(keyword, driver)
 
         self.insertHref(hrefList, db)
