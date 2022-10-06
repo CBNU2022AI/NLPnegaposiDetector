@@ -16,6 +16,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from youtubeCrawler.fixedQueue import fixedQueue
+from pyvirtualdisplay import Display
 
 import time
 import re
@@ -44,6 +45,10 @@ class Crawler:
         data_list = []
         hrefList = []
         # 드라이버 자동설치
+
+        display = Display(visible=0 , size=(1920, 1080))
+        display.start()
+
         options = webdriver.ChromeOptions()
         options.add_argument('--headless')
         options.add_argument('--no-sandbox')
