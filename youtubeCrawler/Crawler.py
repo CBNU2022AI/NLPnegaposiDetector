@@ -38,7 +38,6 @@ class Crawler:
 
 
         return db
-
     def keywordCrawling(self, keyword):
         keyword.replace(" ", "+")
         db = self.connectMongo()
@@ -46,16 +45,16 @@ class Crawler:
         hrefList = []
         # 드라이버 자동설치
 
-        display = Display(visible=0 , size=(1920, 1080))
-        display.start()
+        # display = Display(visible=0 , size=(1920, 1080))
+        # display.start()
 
         options = webdriver.ChromeOptions()
         options.add_argument('--headless')
         options.add_argument('--no-sandbox')
         options.add_argument('--disable-dev-shm-usage')
-        options.add_argument("user-agent=Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko")
+        options.add_argument("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36")
 
-        driver = webdriver.Chrome(service = Service(ChromeDriverManager().install()),chrome_options=options)
+        driver = webdriver.Chrome(service = Service(ChromeDriverManager().install()))
         hrefList = self.hrefCrawling(keyword, driver)
 
         self.insertHref(hrefList, db)
@@ -89,20 +88,6 @@ class Crawler:
         aTagList = []
         hrefList = []
         hrefJsonList = []
-
-
-        htmlSource = driver.page_source
-        html = BeautifulSoup(htmlSource, 'html.parser')
-
-        aTagList = html.findAll('a', {'class' : "yt-simple-endpoint style-scope ytd-video-renderer"})
-
-        htmlSource = driver.page_source
-        html = BeautifulSoup(htmlSource, 'html.parser')
-
-        aTagList = html.findAll('a', {'class' : "yt-simple-endpoint style-scope ytd-video-renderer"})
-
-
-
         print("stub")
 
         last_page_height = driver.execute_script("return document.documentElement.scrollHeight")
@@ -139,13 +124,13 @@ class Crawler:
                     for z in range(queueCount) :
                         queue.dequeue()
                     queueCount = 1
-        htmlSource = driver.page_source
-        html = BeautifulSoup(htmlSource, 'html.parser')
-
-        aTagList = html.findAll('a', {'class' : "yt-simple-endpoint style-scope ytd-video-renderer"})
-
-        for a in aTagList:
-            hrefList.append(a.attrs["href"])
+        # htmlSource = driver.page_source
+        # html = BeautifulSoup(htmlSource, 'html.parser')
+        #
+        # aTagList = html.findAll('a', {'class' : "yt-simple-endpoint style-scope ytd-video-renderer"})
+        #
+        # for a in aTagList:
+        #     hrefList.append(a.attrs["href"])
 
         htmlSource = driver.page_source
         html = BeautifulSoup(htmlSource, 'html.parser')
